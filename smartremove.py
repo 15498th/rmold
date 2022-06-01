@@ -22,6 +22,25 @@ def set_logger(log_level):
     datefmt = '%Y/%m/%d %H:%M:%S'
     logging.basicConfig(level=log_level, format=log_format, datefmt=datefmt)
 
+def get_size(path):
+    '''return total size of files and directories in given path, don't follow symlinks
+    (on some python versions will fail if symlink pointing to itself encountered,
+    see https://bugs.python.org/issue36035)'''
+    return sum(item.lstat().st_size for item in Path(path).glob('**/*'))
+
+def parse_size(text):
+    base = 1000
+    units = {'K': base**1, 'M': base**2, 'G': base**3, 'T': base**4}
+    pattern = r'(\d+)\s*({})'.format('|'.join(units.keys()))
+    if text.isdecimal():
+        return int(text)
+    match = re.fullmatch(pattern, text)
+    if match is not None:
+        value, unit = match.groups()
+        return int(value) * units[unit]
+    error_message = 'failed to parse size: must me integer with possible modifiers [{}]'
+    raise ValueError(error_message.format(', '.join(units.keys())))
+
 def remove_dir(path):
     if not os.access(path, os.W_OK):
         # don't try to delete non-writeable to reduce log spam
@@ -32,21 +51,22 @@ def remove_dir(path):
         logging.warn(e)
     shutil.rmtree(path, onerror=log_rmtree_error)
 
-def remove_oldest(base_dir, pattern, items_to_keep, sort_key):
+def expand_base_dir(base_dir):
     target_directories = glob.glob(base_dir)
     logging.debug(f'expanding {base_dir} to {target_directories}')
-    logging.debug(f'search pattern: {pattern}')
-    for working_directory in target_directories:
-        working_directory = Path(working_directory)
-        items = []
-        for item in working_directory.iterdir():
-            if re.fullmatch(pattern, item.name):
-                items.append(item)
-        items.sort(key=sort_key, reverse=True)
-        to_be_removed = items[items_to_keep:]
-        logging.debug('remove {}/{} items in {}'.format(len(to_be_removed), len(items), working_directory))
-        for item in to_be_removed:
-            logging.info('remove %s' % item)
+    return target_directories
+
+def select_directories(base_dir, pattern):
+    working_directory = Path(base_dir)
+    items = []
+    for item in working_directory.iterdir():
+        if re.fullmatch(pattern, item.name):
+            items.append(item)
+    return items
+
+def remove_directories(directories):
+        for item in directories:
+            logging.debug('remove %s' % item)
             remove_dir(item)
 
 def main():
@@ -59,8 +79,11 @@ def main():
     parser.add_argument('-p', '--path', required=True, metavar='BASE_DIR', help=info['p'])
     info['r'] = 'regexp pattern for directories to include in sorting and deleting, default is %(default)s'
     parser.add_argument('-r', '--pattern', default=ITEM_PATTERN, help=info['r'])
+    criteria = parser.add_mutually_exclusive_group(required=True)
     info['k'] = 'how many newest directories to keep'
-    parser.add_argument('-k', '--keep_last', required=True, type=int, metavar='ITEMS_TO_KEEP', help=info['k'])
+    criteria.add_argument('-k', '--keep_last', type=int, metavar='ITEMS_TO_KEEP', help=info['k'])
+    info['m'] = 'keep newest directories with total size up to given amount\n'
+    criteria.add_argument('-m', '--max_size', type=parse_size, help=info['m'])
     info['s'] = 'what attribute directories should be ordered by before deleting'
     parser.add_argument('-s', '--sort_by', choices=get_attr.keys(), default=SORT_BY, help=info['s'])
     args = parser.parse_args()
@@ -73,12 +96,34 @@ def main():
         log_level = logging.WARNING
     set_logger(log_level)
     
-    base_dir = args.path
+    base_path = args.path
     pattern = args.pattern
-    keep_last_k = args.keep_last
+    items_to_keep = args.keep_last
+    size_to_keep = args.max_size
     sort_key = get_attr[args.sort_by]
 
-    remove_oldest(base_dir, pattern, keep_last_k, sort_key)
+    for base_dir in expand_base_dir(base_path):
+        items = select_directories(base_dir, pattern)
+        items_total = len(items)
+        items.sort(key=sort_key, reverse=True)
+        if items_to_keep is not None:
+            to_be_removed = items[items_to_keep:]
+        elif size_to_keep is not None:
+            cumulative = 0
+            while cumulative <= size_to_keep:
+                if items:
+                    next_item = items.pop(0)
+                    item_size = get_size(next_item)
+                    cumulative += item_size
+                else:
+                    break
+            to_be_removed = items
+            logging.debug('keep {} items with size of {:.0f}M'.format(items_total-len(to_be_removed), cumulative/1000**2))
+        else:
+            raise Exception('either size or number of directories to keep should be specified')
+
+        logging.info('remove {}/{} items in {}'.format(len(to_be_removed), items_total, base_dir))
+        remove_directories(to_be_removed)
 
 
 if __name__ == '__main__':
