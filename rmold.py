@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 
 import argparse
-import logging
 import glob
+import logging
 import os
-import re
 from pathlib import Path
+import re
 import shutil
 
 BASE_DIR = '/media/motion/**/**/'
@@ -95,7 +95,7 @@ def main():
     else:
         log_level = logging.WARNING
     set_logger(log_level)
-    
+
     base_path = args.path
     pattern = args.pattern
     items_to_keep = args.keep_last
