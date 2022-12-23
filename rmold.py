@@ -96,8 +96,6 @@ def main():
     criteria.add_argument('-k', '--keep_last', type=int, metavar='ITEMS_TO_KEEP', help=info['k'])
     info['m'] = 'keep newest directories with total size up to given amount\n'
     criteria.add_argument('-m', '--max_size', type=parse_size, help=info['m'])
-    info['f'] = 'remove until there is no less then given amount of free space on device\n'
-    criteria.add_argument('-f', '--free_space', type=parse_size, help=info['f'])
     info['s'] = 'what attribute directories should be ordered by before deleting'
     parser.add_argument('-s', '--sort_by', choices=get_attr.keys(), default=SORT_BY, help=info['s'])
     args = parser.parse_args()
