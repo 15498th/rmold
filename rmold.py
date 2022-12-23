@@ -62,12 +62,24 @@ def select_directories(base_dir, pattern):
     for item in working_directory.iterdir():
         if re.fullmatch(pattern, item.name):
             items.append(item)
+    logging.debug(f'found {len(items)} matches for {pattern} in {base_dir}')
     return items
 
 def remove_directories(directories):
         for item in directories:
             logging.debug('remove %s' % item)
             remove_dir(item)
+
+def split_by_total_size(directories, size):
+    position = 0
+    cumulative = 0
+    while cumulative <= size:
+        if position < len(directories):
+            cumulative += get_size(directories[position])
+            position += 1
+        else:
+            break
+    return directories[:position], directories[position:]
 
 def main():
     info = {}
@@ -107,20 +119,12 @@ def main():
     for base_dir in expand_base_dir(base_path):
         items = select_directories(base_dir, pattern)
         items_total = len(items)
-        items.sort(key=sort_key, reverse=True)
+        items.sort(key=sort_key, reverse=False)
         if items_to_keep is not None:
-            to_be_removed = items[items_to_keep:]
+            to_be_removed = items[:items_to_keep]
         elif size_to_keep is not None:
-            cumulative = 0
-            while cumulative <= size_to_keep:
-                if items:
-                    next_item = items.pop(0)
-                    item_size = get_size(next_item)
-                    cumulative += item_size
-                else:
-                    break
-            to_be_removed = items
-            logging.debug('keep {} items with size of {:.0f}M'.format(items_total-len(to_be_removed), cumulative/1000**2))
+            to_keep, to_be_removed = split_by_total_size(items, size_to_keep)
+            logging.debug('keep %d items with size of %.0fM' % (len(to_keep), sum(get_size(path) for path in to_keep)/1000**2))
         else:
             raise Exception('either size or number of directories to keep should be specified')
 
