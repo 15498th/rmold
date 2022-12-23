@@ -8,7 +8,6 @@ from pathlib import Path
 import re
 import shutil
 
-BASE_DIR = '/media/motion/**/**/'
 ITEM_PATTERN = r'\d{4}\d{2}\d{2}'
 SORT_BY = 'time'
 
@@ -88,7 +87,7 @@ def main():
     info['v'] = 'output additional debug messages, use -vv for more details'
     parser.add_argument('--verbose', '-v', action='count', default=0, help=info['v'])
     info['p'] = 'root directory to search and remove within. Accepts windcards'
-    parser.add_argument('-p', '--path', required=True, metavar='BASE_DIR', help=info['p'])
+    parser.add_argument('-p', '--path', required=True, help=info['p'])
     info['r'] = 'regexp pattern for directories to include in sorting and deleting, default is %(default)s'
     parser.add_argument('-r', '--pattern', default=ITEM_PATTERN, help=info['r'])
     criteria = parser.add_mutually_exclusive_group(required=True)
