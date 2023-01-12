@@ -11,4 +11,6 @@ In order to allow running in multiple root directories containing single pattern
 ### Example
 
 Assuming there is a backup job that runs daily and creates folder with name `snapshot-YYYYmmdd` in `/media/backups/`, in order to keep space usage under 10Gb the following arguments could be used:
-```rmold.py --path "/media/backups/" --pattern "snapshot-\d{4}\d{2}\d{2}" --max_size 10G```
+```bash
+rmold.py --path "/media/backups/" --pattern "snapshot-\d{4}\d{2}\d{2}" --max_size 10G
+```
