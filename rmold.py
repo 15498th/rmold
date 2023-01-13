@@ -64,11 +64,6 @@ def select_directories(base_dir, pattern):
     logging.debug(f'found {len(items)} matches for {pattern} in {base_dir}')
     return items
 
-def remove_directories(directories):
-        for item in directories:
-            logging.debug('remove %s' % item)
-            remove_dir(item)
-
 def split_by_total_size(directories, size):
     position = 0
     cumulative = 0
@@ -97,6 +92,8 @@ def main():
     criteria.add_argument('-m', '--max-size', type=parse_size, help=info['m'])
     info['s'] = 'what attribute directories should be ordered by before deleting'
     parser.add_argument('-s', '--sort-by', choices=get_attr.keys(), default=SORT_BY, help=info['s'])
+    info['d'] = 'print directories instead of deleting them'
+    parser.add_argument('-d', '--dry-run', action='store_true', default=False, help=info['d'])
     args = parser.parse_args()
 
     if args.verbose > 1:
@@ -126,7 +123,13 @@ def main():
             raise Exception('either size or number of directories to keep should be specified')
 
         logging.info('remove {}/{} items in {}'.format(len(to_be_removed), items_total, base_dir))
-        remove_directories(to_be_removed)
+        for directory in to_be_removed:
+            if args.dry_run:
+                logging.warn('[dry-run] would remove %s' % directory)
+            else:
+                logging.debug('remove %s' % directory)
+                remove_dir(directory)
+
 
 
 if __name__ == '__main__':
