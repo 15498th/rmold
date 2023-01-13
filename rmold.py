@@ -17,7 +17,7 @@ get_attr = {
         }
 
 def set_logger(log_level):
-    log_format = '%(asctime)s.%(msecs)03d [%(levelname)s] %(message)s'
+    log_format = '[%(asctime)s] %(message)s'
     datefmt = '%Y/%m/%d %H:%M:%S'
     logging.basicConfig(level=log_level, format=log_format, datefmt=datefmt)
 
