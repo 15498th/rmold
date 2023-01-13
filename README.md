@@ -33,12 +33,12 @@ optional arguments:
   -r PATTERN, --pattern PATTERN
                         regexp pattern for directories to include in sorting
                         and deleting, default is \d{4}\d{2}\d{2}
-  -k ITEMS_TO_KEEP, --keep_last ITEMS_TO_KEEP
+  -k ITEMS_TO_KEEP, --keep-last ITEMS_TO_KEEP
                         how many newest directories to keep
-  -m MAX_SIZE, --max_size MAX_SIZE
+  -m MAX_SIZE, --max-size MAX_SIZE
                         keep newest directories with total size up to given
                         amount
-  -s {time,name}, --sort_by {time,name}
+  -s {time,name}, --sort-by {time,name}
                         what attribute directories should be ordered by before
                         deleting
 ```

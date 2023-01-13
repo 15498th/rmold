@@ -92,11 +92,11 @@ def main():
     parser.add_argument('-r', '--pattern', default=ITEM_PATTERN, help=info['r'])
     criteria = parser.add_mutually_exclusive_group(required=True)
     info['k'] = 'how many newest directories to keep'
-    criteria.add_argument('-k', '--keep_last', type=int, metavar='ITEMS_TO_KEEP', help=info['k'])
+    criteria.add_argument('-k', '--keep-last', type=int, metavar='ITEMS_TO_KEEP', help=info['k'])
     info['m'] = 'keep newest directories with total size up to given amount\n'
-    criteria.add_argument('-m', '--max_size', type=parse_size, help=info['m'])
+    criteria.add_argument('-m', '--max-size', type=parse_size, help=info['m'])
     info['s'] = 'what attribute directories should be ordered by before deleting'
-    parser.add_argument('-s', '--sort_by', choices=get_attr.keys(), default=SORT_BY, help=info['s'])
+    parser.add_argument('-s', '--sort-by', choices=get_attr.keys(), default=SORT_BY, help=info['s'])
     args = parser.parse_args()
 
     if args.verbose > 1:
